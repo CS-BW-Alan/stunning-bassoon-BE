@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 from .models import *
 from rest_framework.decorators import api_view
 import json
+from util.create_world import StartRooms
 
 # instantiate pusher
 # pusher = Pusher(app_id=config('PUSHER_APP_ID'), key=config('PUSHER_KEY'), secret=config('PUSHER_SECRET'), cluster=config('PUSHER_CLUSTER'))
@@ -14,6 +15,7 @@ import json
 @csrf_exempt
 @api_view(["GET"])
 def initialize(request):
+    StartRooms.create_rooms()
     user = request.user
     player = user.player
     player_id = player.id
