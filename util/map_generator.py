@@ -59,14 +59,14 @@ class World:
 
         # methods to uncomment and copy paste into generation loops
         # could probably reduce into function on second pass
-        # # north:
-        # if world_map[i + 1][j]:
-        #     world_map[i][j].connectRooms(world_map[i + 1][j], "n")
-        #     print("north connect")
+        # north:
+        if world_map[i - 1][j]:
+            world_map[i][j].connectRooms(world_map[i - 1][j], "n")
+            print("north connect")
 
         # # south:
-        # if world_map[i - 1][j]:
-        #     world_map[i][j].connectRooms(world_map[i - 1][j], "s")
+        # if world_map[i + 1][j]:
+        #     world_map[i][j].connectRooms(world_map[i + 1][j], "s")
         #     print("south connect")
 
         # # east:
@@ -88,8 +88,8 @@ class World:
                         print(f"room connect; i = {i}; j = {j}")
                         # Generate south and east connections
                         # south:
-                        if world_map[i - 1][j]:
-                            world_map[i][j].connectRooms(world_map[i - 1][j], "s")
+                        if world_map[i + 1][j]:
+                            world_map[i][j].connectRooms(world_map[i + 1][j], "s")
                             print("south connect")
 
                         # east:
@@ -102,8 +102,8 @@ class World:
                         # Generate south, east, and west connections
                         print(f"room connect; i = {i}; j = {j}")
                         # south:
-                        if world_map[i - 1][j]:
-                            world_map[i][j].connectRooms(world_map[i - 1][j], "s")
+                        if world_map[i + 1][j]:
+                            world_map[i][j].connectRooms(world_map[i + 1][j], "s")
                             print("south connect")
 
                         # east:
@@ -121,8 +121,8 @@ class World:
                         # Generate south and west connections
                         print(f"room connect; i = {i}; j = {j}")
                         # south:
-                        if world_map[i - 1][j]:
-                            world_map[i][j].connectRooms(world_map[i - 1][j], "s")
+                        if world_map[i + 1][j]:
+                            world_map[i][j].connectRooms(world_map[i + 1][j], "s")
                             print("south connect")
 
                         # west:
@@ -141,13 +141,13 @@ class World:
                         # Generate north, south, and east connections
                         print(f"room connect; i = {i}; j = {j}")
                         # north:
-                        if world_map[i + 1][j]:
-                            world_map[i][j].connectRooms(world_map[i + 1][j], "n")
+                        if world_map[i - 1][j]:
+                            world_map[i][j].connectRooms(world_map[i - 1][j], "n")
                             print("north connect")
 
                         # south:
-                        if world_map[i - 1][j]:
-                            world_map[i][j].connectRooms(world_map[i - 1][j], "s")
+                        if world_map[i + 1][j]:
+                            world_map[i][j].connectRooms(world_map[i + 1][j], "s")
                             print("south connect")
 
                         # east:
@@ -160,6 +160,25 @@ class World:
                     elif j > 0 and j < len(blueprint) - 1 and world_map[i][j] != None: 
                         # Generate north, south, east, and west connections
                         print(f"room connect; i = {i}; j = {j}")
+                        # north:
+                        if world_map[i - 1][j]:
+                            world_map[i][j].connectRooms(world_map[i - 1][j], "n")
+                            print("north connect")
+
+                        # south:
+                        if world_map[i + 1][j]:
+                            world_map[i][j].connectRooms(world_map[i + 1][j], "s")
+                            print("south connect")
+
+                        # east:
+                        if world_map[i][j + 1]:
+                            world_map[i][j].connectRooms(world_map[i][j + 1], "e")
+                            print("east connect")
+
+                        # west:
+                        if world_map[i][j - 1]:
+                            world_map[i][j].connectRooms(world_map[i][j - 1], "w")
+                            print("west connect")
 
                     
                     # Rules for last columns (no east)
@@ -167,13 +186,13 @@ class World:
                         # Generate north, south, and west connections
                         print(f"room connect; i = {i}; j = {j}")
                         # north:
-                        if world_map[i + 1][j]:
-                            world_map[i][j].connectRooms(world_map[i + 1][j], "n")
+                        if world_map[i - 1][j]:
+                            world_map[i][j].connectRooms(world_map[i - 1][j], "n")
                             print("north connect")
 
                         # south:
-                        if world_map[i - 1][j]:
-                            world_map[i][j].connectRooms(world_map[i - 1][j], "s")
+                        if world_map[i + 1][j]:
+                            world_map[i][j].connectRooms(world_map[i + 1][j], "s")
                             print("south connect")
 
                         # west:
@@ -189,12 +208,12 @@ class World:
                 for j in range(0, len(blueprint[0])):
                     # Rules for first column (no west)
                     if j == 0 and world_map[i][j] != None:
-                        # Generate south and east connections
+                        # Generate north and east connections
                         print(f"room connect; i = {i}; j = {j}")
-                        # south:
+                        # north:
                         if world_map[i - 1][j]:
-                            world_map[i][j].connectRooms(world_map[i - 1][j], "s")
-                            print("south connect")
+                            world_map[i][j].connectRooms(world_map[i - 1][j], "n")
+                            print("north connect")
 
                         # east:
                         if world_map[i][j + 1]:
@@ -203,12 +222,12 @@ class World:
                     
                     # Rules for middles columns (west and east)
                     elif j > 0 and j < len(blueprint) - 1 and world_map[i][j] != None: 
-                        # Generate south, east, and west connections
+                        # Generate north, east, and west connections
                         print(f"room connect; i = {i}; j = {j}")
-                        # south:
+                        # north:
                         if world_map[i - 1][j]:
-                            world_map[i][j].connectRooms(world_map[i - 1][j], "s")
-                            print("south connect")
+                            world_map[i][j].connectRooms(world_map[i - 1][j], "n")
+                            print("north connect") 
 
                         # east:
                         if world_map[i][j + 1]:
@@ -223,12 +242,12 @@ class World:
                     
                     # Rules for last columns (no east)
                     elif j == len(blueprint) - 1 and world_map[i][j] != None: 
-                        # Generate south and west connections
+                        # Generate north and west connections
                         print(f"room connect; i = {i}; j = {j}")
-                        # south:
+                        # north:
                         if world_map[i - 1][j]:
-                            world_map[i][j].connectRooms(world_map[i - 1][j], "s")
-                            print("south connect")
+                            world_map[i][j].connectRooms(world_map[i - 1][j], "n")
+                            print("north connect")
 
                         # west:
                         if world_map[i][j - 1]:
