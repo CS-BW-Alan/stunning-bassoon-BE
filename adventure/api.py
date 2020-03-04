@@ -62,13 +62,13 @@ def move(request):
             "players": [{
                 "player_id": player.id,
                 "username": player.user.username,
-                # "points": player.points,
+                "points": player.points,
                 "current_room": player.currentRoom
             } for player in Player.objects.all()],
             "rooms": [{
                 "room_id": room.id,
                 "players": [player.id for player in Players.objects.filter(currentRoom=room.id)],
-                # "points": room.points
+                "points": room.points
             } for room in Room.objects.all()]
         }
         print(f"World Dictionary for update:\n{world_dict}")
