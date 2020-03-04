@@ -4,6 +4,7 @@ from django.conf import settings
 from django.db import migrations, models
 import django.db.models.deletion
 import uuid
+import random
 
 
 class Migration(migrations.Migration):
@@ -19,12 +20,14 @@ class Migration(migrations.Migration):
             name='Room',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('room_id', models.IntegerField(default=0)),
                 ('title', models.CharField(default='DEFAULT TITLE', max_length=50)),
                 ('description', models.CharField(default='DEFAULT DESCRIPTION', max_length=500)),
                 ('n_to', models.IntegerField(default=0)),
                 ('s_to', models.IntegerField(default=0)),
                 ('e_to', models.IntegerField(default=0)),
                 ('w_to', models.IntegerField(default=0)),
+                ('points', models.IntegerField(default=random.randint(1,10))),
             ],
         ),
         migrations.CreateModel(
