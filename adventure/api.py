@@ -10,6 +10,7 @@ import json
 from util.create_world import StartRooms
 from adventure.models import Player, Room
 from util.map_generator import World
+from time import gmtime
 
 # instantiate pusher
 pusher = Pusher(app_id=config('PUSHER_APP_ID'), key=config('PUSHER_KEY'), secret=config('PUSHER_SECRET'), cluster=config('PUSHER_CLUSTER'))
@@ -19,7 +20,11 @@ pusher = Pusher(app_id=config('PUSHER_APP_ID'), key=config('PUSHER_KEY'), secret
 def initialize(request):
     # StartRooms.create_rooms()
     World.create_rooms()
+    
     user = request.user
+    user.player = Player()
+    user.player.save()
+    user.save()
     player = user.player
     player_id = player.id
     uuid = player.uuid
@@ -101,4 +106,20 @@ def details(request):
 def say(request):
     # IMPLEMENT
     data = json.loads(request.body)
-    return JsonResponse({'error':"Not yet implemented"}, safe=True, status=500)
+    text = data['message']
+    user = request.user.username
+    print(f"Data:\n{request}")
+    time = {
+        'hours': gmtime().tm_hour,
+        'mins': gmtime().tm_min,
+        'secs': gmtime().tm_sec
+    }
+
+    message = {
+        'user': user,
+        'time': time,
+        'message': text
+    }
+
+    pusher.trigger('game-channel', 'new-message', message)
+    return JsonResponse({'message': "Message received"}, safe=True, status=201)
