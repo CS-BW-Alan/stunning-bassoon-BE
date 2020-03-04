@@ -1,4 +1,4 @@
-from adventure.models import Room
+from adventure.models import Room, Player
 
 
 class World:
@@ -47,7 +47,7 @@ class World:
         for i in range(0, len(blueprint)):
             for j in range(0, len(blueprint[0])):
                 if blueprint[i][j] == 1:
-                    world_map[i][j] = Room(room_id=room_id, x_coord=j, y_coord=i)
+                    world_map[i][j] = Room(x_coord=j, y_coord=i)
                     world_map[i][j].save()
                     room_id =+ 1
         print("World generation complete")
@@ -256,5 +256,10 @@ class World:
 
                     else:
                         print(f"No room at; i = {i}; j = {j}")
+        print("World connections complete")
+        players=Player.objects.all()
+        for p in players:
+            p.currentRoom=world_map[2][2].id
+            p.save()
         print("World connections complete")
         return
