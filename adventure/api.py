@@ -55,22 +55,26 @@ def move(request):
         players = nextRoom.playerNames(player_id)
         currentPlayerUUIDs = room.playerUUIDs(player_id)
         nextPlayerUUIDs = nextRoom.playerUUIDs(player_id)
-        print("inside move if")
         
         # Create dictionary for pusher
         world_dict = { 
             "players": [{
-                "player_id": player.id,
-                "username": player.user.username,
-                "points": player.points,
-                "current_room": player.currentRoom
-            } for player in Player.objects.all()],
+                "player_id": p.id,
+                "username": p.user.username,
+                "points": p.points,
+                "current_room": p.currentRoom
+            } for p in Player.objects.all()],
             "rooms": [{
-                "room_id": room.id,
-                "players": [player.id for player in Players.objects.filter(currentRoom=room.id)],
-                "points": room.points
-            } for room in Room.objects.all()]
+                "room_id": r.id,
+                "players": [p.id for p in Player.objects.filter(currentRoom=r.id)],
+                "points": r.points
+            } for r in Room.objects.all()]
         }
+
+        for r in Room.objects.all():
+            print("Room:")
+            print(r.points)
+
         print(f"World Dictionary for update:\n{world_dict}")
         pusher.trigger('game-channel', 'update-world', {'world': world_dict})
 
