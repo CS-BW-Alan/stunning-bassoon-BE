@@ -8,6 +8,7 @@ from .models import *
 from rest_framework.decorators import api_view
 import json
 from util.create_world import StartRooms
+from adventure.models import Player, Room
 
 # instantiate pusher
 pusher = Pusher(app_id=config('PUSHER_APP_ID'), key=config('PUSHER_KEY'), secret=config('PUSHER_SECRET'), cluster=config('PUSHER_CLUSTER'))
@@ -52,10 +53,30 @@ def move(request):
         players = nextRoom.playerNames(player_id)
         currentPlayerUUIDs = room.playerUUIDs(player_id)
         nextPlayerUUIDs = nextRoom.playerUUIDs(player_id)
-        for p_uuid in currentPlayerUUIDs:
-            pusher.trigger(f'p-channel-{p_uuid}', u'broadcast', {'message':f'{player.user.username} has walked {dirs[direction]}.'})
-        for p_uuid in nextPlayerUUIDs:
-            pusher.trigger(f'p-channel-{p_uuid}', u'broadcast', {'message':f'{player.user.username} has entered from the {reverse_dirs[direction]}.'})
+        print("inside move if")
+        
+        # Create dictionary for pusher
+        world_dict = { 
+            "players": [{
+                "player_id": player.id,
+                "username": player.user.username,
+                # "points": player.points,
+                "current_room": player.currentRoom
+            } for player in Player.objects.all()],
+            "rooms": [{
+                "room_id": room.id,
+                # "players": room.playerUUIDs(),
+                # "points": room.points
+            } for room in Room.objects.all()]
+        }
+        print(f"World Dictionary for update:\n{world_dict}")
+        pusher.trigger('game-channel', 'update-world', {'world': world_dict})
+
+
+        # for p_uuid in currentPlayerUUIDs:
+        #     pusher.trigger(f'p-channel-{p_uuid}', u'broadcast', {'message':f'{player.user.username} has walked {dirs[direction]}.'})
+        # for p_uuid in nextPlayerUUIDs:
+        #     pusher.trigger(f'p-channel-{p_uuid}', u'broadcast', {'message':f'{player.user.username} has entered from the {reverse_dirs[direction]}.'})
         return JsonResponse({'name':player.user.username, 'title':nextRoom.title, 'description':nextRoom.description, 'players':players, 'error_msg':""}, safe=True)
     else:
         players = room.playerNames(player_id)
@@ -66,7 +87,7 @@ def details(request):
     player = request.user.player
     player_id = player.id
     room = player.room()
-    players = room.playerNames(player_id)
+    players = room.playerNames(player_id)   
     return JsonResponse({'name':player.user.username, 'title':room.title, 'description':room.description, 'players':players}, safe=True)
 
 @csrf_exempt
