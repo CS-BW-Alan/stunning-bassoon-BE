@@ -10,8 +10,11 @@ def randomint():
     return random.randint(1,10) * 10
 
 class Room(models.Model):
-    title = models.CharField(max_length=50, default="DEFAULT TITLE")
-    description = models.CharField(max_length=500, default="DEFAULT DESCRIPTION")
+    title = models.CharField(max_length=50, default="An open space")
+    description = models.CharField(max_length=500, default="You can travel freely through this space")
+    room_id = models.IntegerField(default=0)
+    x_coord = models.IntegerField(default=0)
+    y_coord = models.IntegerField(default=0)
     n_to = models.IntegerField(default=0)
     s_to = models.IntegerField(default=0)
     e_to = models.IntegerField(default=0)
