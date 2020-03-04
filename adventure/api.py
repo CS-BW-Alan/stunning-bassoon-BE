@@ -67,7 +67,7 @@ def move(request):
             } for player in Player.objects.all()],
             "rooms": [{
                 "room_id": room.id,
-                # "players": room.playerUUIDs(),
+                "players": [player.id for player in Players.objects.filter(currentRoom=room.id)],
                 # "points": room.points
             } for room in Room.objects.all()]
         }
@@ -96,4 +96,5 @@ def details(request):
 @api_view(["POST"])
 def say(request):
     # IMPLEMENT
+    data = json.loads(request.body)
     return JsonResponse({'error':"Not yet implemented"}, safe=True, status=500)
