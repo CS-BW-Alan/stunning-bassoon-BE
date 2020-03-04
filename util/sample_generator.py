@@ -4,10 +4,10 @@
 # You can modify generate_rooms() to create your own
 # procedural generation algorithm and use print_rooms()
 # to see the world.
-
+import random
 
 class Room:
-    def __init__(self, id, name, description, x, y):
+    def __init__(self, id, name, description, x, y, points=None):
         self.id = id
         self.name = name
         self.description = description
@@ -17,6 +17,9 @@ class Room:
         self.w_to = None
         self.x = x
         self.y = y
+        if points is None:
+            points = random.randint(1,10) * 10
+        self.points = points
     def __repr__(self):
         if self.e_to is not None:
             return f"({self.x}, {self.y}) -> ({self.e_to.x}, {self.e_to.y})"

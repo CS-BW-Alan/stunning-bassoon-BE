@@ -4,6 +4,7 @@ from django.conf import settings
 from django.db import migrations, models
 import django.db.models.deletion
 import uuid
+import random
 
 
 class Migration(migrations.Migration):
@@ -25,6 +26,7 @@ class Migration(migrations.Migration):
                 ('s_to', models.IntegerField(default=0)),
                 ('e_to', models.IntegerField(default=0)),
                 ('w_to', models.IntegerField(default=0)),
+                ('points', models.IntegerField(default=random.randint(1,10))),
             ],
         ),
         migrations.CreateModel(
