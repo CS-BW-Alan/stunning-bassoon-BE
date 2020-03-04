@@ -1,0 +1,33 @@
+{
+    "board": [
+        {
+            "room_id": 1,
+            "players": [
+                1,
+                2,
+                3
+            ],
+            "points": 0
+        },
+        {
+            "room_id": 2,
+            "players": [
+                4
+            ],
+            "points": 0
+        },
+        {
+            "room_id": 3,
+            "players": [],
+            "points": 10
+        }
+    ],
+    "players": [
+        {
+            "player_id": 1,
+            "username": "patrick",
+            "points": 10,
+            "current_room": 1
+        }
+    ]
+}
