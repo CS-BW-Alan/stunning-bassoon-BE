@@ -47,19 +47,43 @@ world_map = []
 current_player = None
 player_count = 0
 playerNames = []
+roomCount = None
 
-@csrf_exempt
+def initRoomCount():
+    global roomCount
+    roomCount = len(Room.objects.all())
 
+# @csrf_exempt
 @api_view(["GET"])
 def startGame(request):
     global world_map 
     world_map = World.create_rooms(blueprint)
+    initRoomCount()
     global playerNames
     playerNames = [p.user.username for p in Player.objects.all()]
     global current_player 
     current_player = Player.objects.all()[0].user.username
     global player_count
     player_count = len(playerNames)
+
+    world_dict = { 
+            "players": [{
+                "player_id": p.id,
+                "username": p.user.username,
+                "score": p.points,
+                "current_room": p.currentRoom,
+    
+
+            } for p in Player.objects.all()],
+            "board": [{
+                "room_id": r.id,
+                "x_coord": r.x_coord,
+                "y_coord": r.y_coord,
+                "players": [p.id for p in Player.objects.filter(currentRoom=r.id)],
+                "point_value": r.points
+            } for r in Room.objects.all()]
+        }
+
     return JsonResponse({'message': 'World creaated', 'blueprint':blueprint}, safe=True)
 
 @api_view(["GET"])
@@ -144,6 +168,7 @@ def move(request):
     print(current_player)
     global player_count
     global playerNames
+    global roomCount
     if player.moves > 0 and player.user.username == current_player:
         player_id = player.id
         player_uuid = player.uuid
@@ -164,6 +189,9 @@ def move(request):
             player.currentRoom=nextRoomID
             player.moves -= 1
             if player.moves == 0:
+                if room.points != 0:
+                    
+                    roomCount -= 1
                 room = player.room()
                 player.points += room.points
                 room.points = 0
@@ -186,7 +214,8 @@ def move(request):
                     "player_id": player.id,
                     "username": player.user.username,
                     "points": player.points,
-                    "current_room": player.currentRoom
+                    "current_room": player.currentRoom,
+                    "isTurn": player.user.username == current_player,
                 },
                 "oldRoom": {
                     "room_id": room.id,
@@ -199,9 +228,18 @@ def move(request):
                     "points": nextRoom.points
                 }
             }
-    
+            if roomCount <= 0:
+                players = Player.objects.all()
+                winner = players[0]
+                for p in players[1:]:
+                    if p.points > winner.points:
+                        winner = p
+                pusher.trigger('game-channel', 'end-game', {'winner': winner.user.username})
+
             pusher.trigger('game-channel', 'update-world', {'updates': updated})
-    
+
+
+
             # for p_uuid in currentPlayerUUIDs:
             #     pusher.trigger(f'p-channel-{p_uuid}', u'broadcast', {'message':f'{player.user.username} has walked {dirs[direction]}.'})
             # for p_uuid in nextPlayerUUIDs:
