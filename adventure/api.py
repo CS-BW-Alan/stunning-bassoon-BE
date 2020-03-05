@@ -200,7 +200,7 @@ def move(request):
                 #     current_player = players[0]
                 # else:
                 player_index = playerNames.index(current_player)
-                player_index +=1
+                player_index += 1
                 if player_index >= player_count:
                     current_player = playerNames[0]
                 else:
@@ -210,12 +210,14 @@ def move(request):
             currentPlayerUUIDs = room.playerUUIDs(player_id)
             nextPlayerUUIDs = nextRoom.playerUUIDs(player_id)
             updated = {
+                "current_player": current_player,
                 "player": {
                     "player_id": player.id,
                     "username": player.user.username,
                     "points": player.points,
                     "current_room": player.currentRoom,
                     "isTurn": player.user.username == current_player,
+                    "movePoints": player.moves
                 },
                 "oldRoom": {
                     "room_id": room.id,
