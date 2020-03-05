@@ -44,6 +44,9 @@ blueprint = [
 ]
 
 world_map = []
+current_player = None
+player_count = 0
+playerNames = []
 
 @csrf_exempt
 
@@ -51,11 +54,32 @@ world_map = []
 def startGame(request):
     global world_map 
     world_map = World.create_rooms(blueprint)
+    global playerNames
+    playerNames = [p.user.username for p in Player.objects.all()]
+    global current_player 
+    current_player = Player.objects.all()[0].user.username
+    global player_count
+    player_count = len(playerNames)
     return JsonResponse({'message': 'World creaated', 'blueprint':blueprint}, safe=True)
 
 @api_view(["GET"])
 def getGame(request):
     return JsonResponse({'message': 'Welcome to the game', 'blueprint':blueprint}, safe=True)
+
+@api_view(["GET"])
+def getPlayers(request):
+    return JsonResponse({'message': 'Here are the players', 'players':[p.user.username for p in Player.objects.all()]}, safe=True)
+
+@api_view(["GET"])
+def deletePlayers(request):
+    if len(Player.objects.all()) > 0:
+        players = Player.objects.all().delete()
+        # for p in players:
+        #     p.delete()
+        #     p.save()
+        return JsonResponse({'message': "You've killed them all"}, safe=True)
+    else: 
+        return JsonResponse({'message': "Already no players"}, safe=True)
 
 # deprecated 
 # @api_view(["GET"])
@@ -115,7 +139,12 @@ def move(request):
     dirs={"w": "north", "s": "south", "d": "east", "a": "west"}
     reverse_dirs = {"n": "south", "s": "north", "e": "west", "w": "east"}
     player = request.user.player
-    if player.moves > 0:
+    print(player.user.username)
+    global current_player
+    print(current_player)
+    global player_count
+    global playerNames
+    if player.moves > 0 and player.user.username == current_player:
         player_id = player.id
         player_uuid = player.uuid
         data = json.loads(request.body)
@@ -139,8 +168,17 @@ def move(request):
                 player.points += room.points
                 room.points = 0
                 room.save()
+                # if current_player = player_count:
+                #     current_player = players[0]
+                # else:
+                player_index = playerNames.index(current_player)
+                player_index +=1
+                if player_index >= player_count:
+                    current_player = playerNames[0]
+                else:
+                    current_player = playerNames[player_index]
             player.save()
-            players = nextRoom.playerNames(player_id)
+            playersNames = nextRoom.playerNames(player_id)
             currentPlayerUUIDs = room.playerUUIDs(player_id)
             nextPlayerUUIDs = nextRoom.playerUUIDs(player_id)
             updated = {
@@ -168,9 +206,9 @@ def move(request):
             #     pusher.trigger(f'p-channel-{p_uuid}', u'broadcast', {'message':f'{player.user.username} has walked {dirs[direction]}.'})
             # for p_uuid in nextPlayerUUIDs:
             #     pusher.trigger(f'p-channel-{p_uuid}', u'broadcast', {'message':f'{player.user.username} has entered from the {reverse_dirs[direction]}.'})
-            return JsonResponse({'name':player.user.username, 'player_points':player.points, 'title':nextRoom.title, 'description':nextRoom.description, 'players':players, 'error_msg':"", 'room_points':room.points}, safe=True)
+            return JsonResponse({'name':player.user.username, 'player_points':player.points, 'title':nextRoom.title, 'description':nextRoom.description, 'players':playersNames, 'error_msg':"", 'room_points':room.points}, safe=True)
         else:
-            players = room.playerNames(player_id)
+            playersNames = room.playerNames(player_id)
             return JsonResponse({'error_msg':"You cannot move that way."}, safe=True)
     else:
         return JsonResponse({'error_msg':"Player has no moves left."}, safe=True)
@@ -180,8 +218,8 @@ def details(request):
     player = request.user.player
     player_id = player.id
     room = player.room()
-    players = room.playerNames(player_id)
-    return JsonResponse({'name':player.user.username, 'room_title':room.title, 'description':room.description, 'players':players, 'player_points':player.points, 'room_points':room.points, 'moves': player.moves}, safe=True)
+    playersNames = room.playerNames(player_id)
+    return JsonResponse({'name':player.user.username, 'room_title':room.title, 'description':room.description, 'players':playersNames, 'player_points':player.points, 'room_points':room.points, 'moves': player.moves}, safe=True)
 
 @csrf_exempt
 @api_view(["POST"])
