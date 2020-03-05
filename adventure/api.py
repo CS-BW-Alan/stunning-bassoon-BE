@@ -82,6 +82,7 @@ def startGame(request):
                 "point_value": r.points
             } for r in Room.objects.all()]
         }
+    pusher.trigger('game-channel', 'start-game', world_dict)
 
     return JsonResponse({'message': 'World creaated', 'blueprint':blueprint}, safe=True)
 
