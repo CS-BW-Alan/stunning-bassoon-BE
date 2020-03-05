@@ -66,24 +66,26 @@ def startGame(request):
     global player_count
     player_count = len(playerNames)
 
-    world_dict = {
-            "current_player": current_player,
-            "players": [{
-                "player_id": p.id,
-                "username": p.user.username,
-                "score": p.points,
-                "current_room": p.currentRoom,
-            } for p in Player.objects.all()],
-            "board": [{
+    player_dict = {
+        "current_player": current_player,
+        "players": [{
+            "player_id": p.id,
+            "username": p.user.username,
+            "score": p.points,
+            "current_room": p.currentRoom,
+        } for p in Player.objects.all()]
+    }
+
+    board = [{
                 "room_id": r.id,
                 "x_coord": r.x_coord,
                 "y_coord": r.y_coord,
                 "players": [p.id for p in Player.objects.filter(currentRoom=r.id)],
                 "point_value": r.points
             } for r in Room.objects.all()]
-        }
-    pusher.trigger('game-channel', 'start-game', world_dict)
 
+    pusher.trigger('player-channel', 'start-game', player_dict)
+    pusher.trigger('board-channel', 'start-game', board)
     return JsonResponse({'message': 'World creaated', 'blueprint':blueprint}, safe=True)
 
 @api_view(["GET"])
@@ -130,6 +132,7 @@ def joinGame(request):
     newPlayer.user = user
     newPlayer.save()
     # add logic: player drops in room
+    pusher.trigger('player-channel', 'player-joined', {'message': f"{request.user.username} has joined the game", 'player': user.username})
     return JsonResponse({'Msg':"Join Successful"}, safe=True)
 
 @api_view(["GET"])
@@ -141,6 +144,7 @@ def leaveGame(request):
         oldPlayer.delete()
     except Player.DoesNotExist:
         return JsonResponse({'error_msg':"Player has already left."}, safe=True)
+    pusher.trigger('player-channel', 'player-left', {'message': f"{request.user.username} has left the game", 'player': user.username})
     return JsonResponse({'Msg':"Leave Successful"}, safe=True)
 
 import random
