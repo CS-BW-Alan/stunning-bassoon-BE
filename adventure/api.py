@@ -103,22 +103,27 @@ def move(request):
             players = nextRoom.playerNames(player_id)
             currentPlayerUUIDs = room.playerUUIDs(player_id)
             nextPlayerUUIDs = nextRoom.playerUUIDs(player_id)
-
-            # Create dictionary for pusher
-            world_dict = { 
-                "players": [{
-                    "player_id": p.id,
-                    "username": p.user.username,
-                    "points": p.points,
-                    "current_room": p.currentRoom
-                } for p in Player.objects.all()],
-                "rooms": [{
-                    "room_id": r.id,
-                    "players": [p.id for p in Player.objects.filter(currentRoom=r.id)],
-                    "points": r.points
-                } for r in Room.objects.all()]
+            updated = {
+                "player": {
+                    "player_id": player.id,
+                    "username": player.user.username,
+                    "points": player.points,
+                    "current_room": player.currentRoom
+                },
+                "oldRoom": {
+                    "room_id": room.id,
+                    "players": [p.id for p in Player.objects.filter(currentRoom=room.id)],
+                    "points": room.points
+                },
+                "newRoom": {
+                    "room_id": nextRoom.id,
+                    "players": [p.id for p in Player.objects.filter(currentRoom=nextRoom.id)],
+                    "points": nextRoom.points
+                }
             }
-            pusher.trigger('game-channel', 'update-world', {'world': world_dict})
+    
+            pusher.trigger('game-channel', 'update-world', {'updates': updated})
+    
             # for p_uuid in currentPlayerUUIDs:
             #     pusher.trigger(f'p-channel-{p_uuid}', u'broadcast', {'message':f'{player.user.username} has walked {dirs[direction]}.'})
             # for p_uuid in nextPlayerUUIDs:
