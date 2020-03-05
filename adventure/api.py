@@ -95,11 +95,7 @@ def move(request):
             }
         }
 
-        for r in Room.objects.all():
-            print("Room:")
-            print(r.points)
 
-        # print(f"World Dictionary for update:\n{world_dict}")
         pusher.trigger('game-channel', 'update-world', {'updates': updated})
 
 
