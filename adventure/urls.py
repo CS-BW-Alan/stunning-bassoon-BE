@@ -6,4 +6,6 @@ urlpatterns = [
     url('move', api.move),
     url('say', api.say),
     url('details', api.details),
+    url('join', api.joinGame),
+    url('leave', api.leaveGame),
 ]

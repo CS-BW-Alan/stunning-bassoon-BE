@@ -20,7 +20,6 @@ pusher = Pusher(app_id=config('PUSHER_APP_ID'), key=config('PUSHER_KEY'), secret
 def initialize(request):
     # StartRooms.create_rooms()
     World.create_rooms()
-    
     user = request.user
     user.player = Player()
     user.player.save()
@@ -32,6 +31,22 @@ def initialize(request):
     players = room.playerNames(player_id)
     return JsonResponse({'uuid': uuid, 'name':player.user.username, 'title':room.title, 'description':room.description, 'players':players}, safe=True)
 
+@api_view(["GET"])
+def joinGame(request):
+    user = request.user
+    newPlayer = Player()
+    #user.player = newPlayer <- this line seems to do the same as below
+    newPlayer.user = user
+    newPlayer.save()
+    return JsonResponse({'Msg':"Join Successful"}, safe=True)
+
+@api_view(["GET"])
+def leaveGame(request):
+    user = request.user
+    oldPlayer = user.player
+    user.player = None
+    oldPlayer.delete()
+    return JsonResponse({'Msg':"Leave Successful"}, safe=True)
 
 # @csrf_exempt
 @api_view(["POST"])
