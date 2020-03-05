@@ -52,68 +52,83 @@ def leaveGame(request):
         user.player = None
         oldPlayer.delete()
     except Player.DoesNotExist:
-        pass
+        return JsonResponse({'error_msg':"Player has already left."}, safe=True)
     return JsonResponse({'Msg':"Leave Successful"}, safe=True)
+
+import random
+def rollDie():
+    return random.randint(1,6)
+
+@api_view(["GET"])
+def roll(request):
+    try:
+        player = request.user.player
+        player.moves = rollDie()
+        player.save()
+        return JsonResponse({'Roll':player.moves}, safe=True)
+    except Player.DoesNotExist:
+        return JsonResponse({'error_msg':"User needs to join game to roll."}, safe=True)
 
 # @csrf_exempt
 @api_view(["POST"])
 def move(request):
-    dirs={"n": "north", "s": "south", "e": "east", "w": "west"}
+    dirs={"w": "north", "s": "south", "d": "east", "a": "west"}
     reverse_dirs = {"n": "south", "s": "north", "e": "west", "w": "east"}
     player = request.user.player
-    player_id = player.id
-    player_uuid = player.uuid
-    data = json.loads(request.body)
-    direction = data['direction']
-    room = player.room()
-    nextRoomID = None
-    if direction == "n":
-        nextRoomID = room.n_to
-    elif direction == "s":
-        nextRoomID = room.s_to
-    elif direction == "e":
-        nextRoomID = room.e_to
-    elif direction == "w":
-        nextRoomID = room.w_to
-    if nextRoomID is not None and nextRoomID > 0:
-        nextRoom = Room.objects.get(id=nextRoomID)
-        player.currentRoom=nextRoomID
-        player.save()
-        players = nextRoom.playerNames(player_id)
-        currentPlayerUUIDs = room.playerUUIDs(player_id)
-        nextPlayerUUIDs = nextRoom.playerUUIDs(player_id)
-        
-        # Create dictionary for pusher
-        world_dict = { 
-            "players": [{
-                "player_id": p.id,
-                "username": p.user.username,
-                "points": p.points,
-                "current_room": p.currentRoom
-            } for p in Player.objects.all()],
-            "rooms": [{
-                "room_id": r.id,
-                "players": [p.id for p in Player.objects.filter(currentRoom=r.id)],
-                "points": r.points
-            } for r in Room.objects.all()]
-        }
+    if player.moves > 0:
+        player_id = player.id
+        player_uuid = player.uuid
+        data = json.loads(request.body)
+        direction = data['direction']
+        room = player.room()
+        nextRoomID = None
+        if direction == "w":
+            nextRoomID = room.n_to
+        elif direction == "s":
+            nextRoomID = room.s_to
+        elif direction == "d":
+            nextRoomID = room.e_to
+        elif direction == "a":
+            nextRoomID = room.w_to
+        if nextRoomID is not None and nextRoomID > 0:
+            nextRoom = Room.objects.get(id=nextRoomID)
+            player.currentRoom=nextRoomID
+            player.moves -= 1
+            if player.moves == 0:
+                room = player.room()
+                player.points += room.points
+                room.points = 0
+                room.save()
+            player.save()
+            players = nextRoom.playerNames(player_id)
+            currentPlayerUUIDs = room.playerUUIDs(player_id)
+            nextPlayerUUIDs = nextRoom.playerUUIDs(player_id)
 
-        for r in Room.objects.all():
-            print("Room:")
-            print(r.points)
-
-        print(f"World Dictionary for update:\n{world_dict}")
-        pusher.trigger('game-channel', 'update-world', {'world': world_dict})
-
-
-        # for p_uuid in currentPlayerUUIDs:
-        #     pusher.trigger(f'p-channel-{p_uuid}', u'broadcast', {'message':f'{player.user.username} has walked {dirs[direction]}.'})
-        # for p_uuid in nextPlayerUUIDs:
-        #     pusher.trigger(f'p-channel-{p_uuid}', u'broadcast', {'message':f'{player.user.username} has entered from the {reverse_dirs[direction]}.'})
-        return JsonResponse({'name':player.user.username, 'title':nextRoom.title, 'description':nextRoom.description, 'players':players, 'error_msg':""}, safe=True)
+            # Create dictionary for pusher
+            world_dict = { 
+                "players": [{
+                    "player_id": p.id,
+                    "username": p.user.username,
+                    "points": p.points,
+                    "current_room": p.currentRoom
+                } for p in Player.objects.all()],
+                "rooms": [{
+                    "room_id": r.id,
+                    "players": [p.id for p in Player.objects.filter(currentRoom=r.id)],
+                    "points": r.points
+                } for r in Room.objects.all()]
+            }
+            pusher.trigger('game-channel', 'update-world', {'world': world_dict})
+            # for p_uuid in currentPlayerUUIDs:
+            #     pusher.trigger(f'p-channel-{p_uuid}', u'broadcast', {'message':f'{player.user.username} has walked {dirs[direction]}.'})
+            # for p_uuid in nextPlayerUUIDs:
+            #     pusher.trigger(f'p-channel-{p_uuid}', u'broadcast', {'message':f'{player.user.username} has entered from the {reverse_dirs[direction]}.'})
+            return JsonResponse({'name':player.user.username, 'player_points':player.points, 'title':nextRoom.title, 'description':nextRoom.description, 'players':players, 'error_msg':"", 'room_points':room.points}, safe=True)
+        else:
+            players = room.playerNames(player_id)
+            return JsonResponse({'error_msg':"You cannot move that way."}, safe=True)
     else:
-        players = room.playerNames(player_id)
-        return JsonResponse({'name':player.user.username, 'title':room.title, 'description':room.description, 'players':players, 'error_msg':"You cannot move that way."}, safe=True)
+        return JsonResponse({'error_msg':"Player has no moves left."}, safe=True)
 
 @api_view(["GET"])
 def details(request):
@@ -121,7 +136,7 @@ def details(request):
     player_id = player.id
     room = player.room()
     players = room.playerNames(player_id)
-    return JsonResponse({'name':player.user.username, 'title':room.title, 'description':room.description, 'players':players, 'points':room.points}, safe=True)
+    return JsonResponse({'name':player.user.username, 'room_title':room.title, 'description':room.description, 'players':players, 'player_points':player.points, 'room_points':room.points, 'moves': player.moves}, safe=True)
 
 @csrf_exempt
 @api_view(["POST"])
