@@ -11,6 +11,7 @@ from util.create_world import StartRooms
 from adventure.models import Player, Room
 from util.map_generator import World
 from time import gmtime
+from django.db import models
 
 # instantiate pusher
 pusher = Pusher(app_id=config('PUSHER_APP_ID'), key=config('PUSHER_KEY'), secret=config('PUSHER_SECRET'), cluster=config('PUSHER_CLUSTER'))
@@ -21,9 +22,6 @@ def initialize(request):
     # StartRooms.create_rooms()
     World.create_rooms()
     user = request.user
-    user.player = Player()
-    user.player.save()
-    user.save()
     player = user.player
     player_id = player.id
     uuid = player.uuid
@@ -34,6 +32,12 @@ def initialize(request):
 @api_view(["GET"])
 def joinGame(request):
     user = request.user
+    try:
+        oldPlayer = user.player
+        user.player = None
+        oldPlayer.delete()
+    except Player.DoesNotExist:
+        pass
     newPlayer = Player()
     #user.player = newPlayer <- this line seems to do the same as below
     newPlayer.user = user
@@ -43,9 +47,12 @@ def joinGame(request):
 @api_view(["GET"])
 def leaveGame(request):
     user = request.user
-    oldPlayer = user.player
-    user.player = None
-    oldPlayer.delete()
+    try:
+        oldPlayer = user.player
+        user.player = None
+        oldPlayer.delete()
+    except Player.DoesNotExist:
+        pass
     return JsonResponse({'Msg':"Leave Successful"}, safe=True)
 
 # @csrf_exempt
