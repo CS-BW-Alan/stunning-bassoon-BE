@@ -15,12 +15,32 @@ from time import gmtime
 # instantiate pusher
 pusher = Pusher(app_id=config('PUSHER_APP_ID'), key=config('PUSHER_KEY'), secret=config('PUSHER_SECRET'), cluster=config('PUSHER_CLUSTER'))
 
+# hard code blueprint to start game
+blueprint = [
+    [0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1],
+    [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1],
+    [0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1],
+    [0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1],
+    [1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1],
+    [0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1],
+    [0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1]
+]
+
 @csrf_exempt
+
+@api_view(["GET"])
+def start_game(request):
+    # StartRooms.create_rooms()
+    World.create_rooms(blueprint)
+    return JsonResponse({'message': 'Welcome to the game', 'blueprint':blueprint}, safe=True)
+    
 @api_view(["GET"])
 def initialize(request):
-    # StartRooms.create_rooms()
-    World.create_rooms()
-    
     user = request.user
     user.player = Player()
     user.player.save()
@@ -30,7 +50,7 @@ def initialize(request):
     uuid = player.uuid
     room = player.room()
     players = room.playerNames(player_id)
-    return JsonResponse({'uuid': uuid, 'name':player.user.username, 'title':room.title, 'description':room.description, 'players':players}, safe=True)
+    return JsonResponse({'uuid': uuid, 'name':player.user.username, 'title':room.title, 'description':room.description, 'players':players, 'blueprint':blueprint}, safe=True)
 
 
 # @csrf_exempt
