@@ -250,5 +250,5 @@ class World:
         for p in players:
             p.currentRoom=world_map[2][2].id
             p.save()
-        print("World connections complete")
+        print("Players set to start")
         return
