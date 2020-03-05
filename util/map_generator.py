@@ -7,40 +7,29 @@ class World:
     #     self.width = len(blueprint[0]) # width is equal to the # of items in a sublist
     #     self.height = len(blueprint) # height is equal to the number of lists
     @staticmethod
-    def create_rooms():
+    def create_rooms(blueprint):
         # clear out any rooms in the database
         Room.objects.all().delete()
 
         # 0's represent obstacles, 1's represent freely traversable rooms
-        blueprint = [
-            [0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1],
-            [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1],
-            [0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1],
-            [0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1],
-            [1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1],
-            [1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1],
-            [1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1],
-            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1],
-            [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1],
-            [0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1],
-            [0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1]
-        ]
+        # below passed in as parameter instead of hardcoded
+        # blueprint = [
+        #     [0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1],
+        #     [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1],
+        #     [0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1],
+        #     [0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1],
+        #     [1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1],
+        #     [1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1],
+        #     [1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1],
+        #     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        #     [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1],
+        #     [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1],
+        #     [0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1],
+        #     [0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1]
+        # ]
 
-        world_map = [
-            [None, None, None, None, None, None, None, None, None, None, None, None],
-            [None, None, None, None, None, None, None, None, None, None, None, None],
-            [None, None, None, None, None, None, None, None, None, None, None, None],
-            [None, None, None, None, None, None, None, None, None, None, None, None],
-            [None, None, None, None, None, None, None, None, None, None, None, None],
-            [None, None, None, None, None, None, None, None, None, None, None, None],
-            [None, None, None, None, None, None, None, None, None, None, None, None],
-            [None, None, None, None, None, None, None, None, None, None, None, None],
-            [None, None, None, None, None, None, None, None, None, None, None, None],
-            [None, None, None, None, None, None, None, None, None, None, None, None],
-            [None, None, None, None, None, None, None, None, None, None, None, None],
-            [None, None, None, None, None, None, None, None, None, None, None, None],
-        ]
+        world_map = [[None for j in range(len(blueprint[0]))] for i in range(len(blueprint))]
+
 
         # Loop over the grid, create rooms, record coordinates
         room_id = 1
