@@ -66,14 +66,13 @@ def startGame(request):
     global player_count
     player_count = len(playerNames)
 
-    world_dict = { 
+    world_dict = {
+            "current_player": current_player,
             "players": [{
                 "player_id": p.id,
                 "username": p.user.username,
                 "score": p.points,
                 "current_room": p.currentRoom,
-    
-
             } for p in Player.objects.all()],
             "board": [{
                 "room_id": r.id,
