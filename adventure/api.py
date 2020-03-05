@@ -12,7 +12,18 @@ from adventure.models import Player, Room
 from util.map_generator import World
 from time import gmtime
 from django.db import models
+'''
+Flow of game initialization:
+PLAN A:
+1) Someone hits `/start` endpoint and creates world map from blueprint
+2) Anyone hits `/get_game` endpoint and get a copy of the blueprint
+3) Anyone hits `/join_game` endpoint and associates their user with a new player who is dropped in starting room
 
+PLAN B:
+1) User joins, but doesn't have a player yet ??? and there is no game baord ??? maybe in chatroom
+2) once all users join, game board and players are all created and placed in starting rooms
+
+'''
 # instantiate pusher
 pusher = Pusher(app_id=config('PUSHER_APP_ID'), key=config('PUSHER_KEY'), secret=config('PUSHER_SECRET'), cluster=config('PUSHER_CLUSTER'))
 
@@ -32,23 +43,30 @@ blueprint = [
     [0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1]
 ]
 
+world_map = []
+
 @csrf_exempt
 
 @api_view(["GET"])
-def start_game(request):
-    # StartRooms.create_rooms()
-    World.create_rooms(blueprint)
-    return JsonResponse({'message': 'Welcome to the game', 'blueprint':blueprint}, safe=True)
-    
+def startGame(request):
+    global world_map 
+    world_map = World.create_rooms(blueprint)
+    return JsonResponse({'message': 'World creaated', 'blueprint':blueprint}, safe=True)
+
 @api_view(["GET"])
-def initialize(request):
-    user = request.user
-    player = user.player
-    player_id = player.id
-    uuid = player.uuid
-    room = player.room()
-    players = room.playerNames(player_id)
-    return JsonResponse({'uuid': uuid, 'name':player.user.username, 'title':room.title, 'description':room.description, 'players':players, 'blueprint':blueprint}, safe=True)
+def getGame(request):
+    return JsonResponse({'message': 'Welcome to the game', 'blueprint':blueprint}, safe=True)
+
+# deprecated 
+# @api_view(["GET"])
+# def initialize(request):
+#     user = request.user
+#     player = user.player
+#     player_id = player.id
+#     uuid = player.uuid
+#     room = player.room()
+#     players = room.playerNames(player_id)
+#     return JsonResponse({'uuid': uuid, 'name':player.user.username, 'title':room.title, 'description':room.description, 'players':players, 'blueprint':blueprint}, safe=True)
 
 @api_view(["GET"])
 def joinGame(request):
@@ -63,6 +81,7 @@ def joinGame(request):
     #user.player = newPlayer <- this line seems to do the same as below
     newPlayer.user = user
     newPlayer.save()
+    # add logic: player drops in room
     return JsonResponse({'Msg':"Join Successful"}, safe=True)
 
 @api_view(["GET"])
