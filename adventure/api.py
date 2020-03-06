@@ -47,19 +47,45 @@ world_map = []
 current_player = None
 player_count = 0
 playerNames = []
+roomCount = None
 
-@csrf_exempt
+def initRoomCount():
+    global roomCount
+    roomCount = len(Room.objects.all())
 
+# @csrf_exempt
 @api_view(["GET"])
 def startGame(request):
     global world_map 
     world_map = World.create_rooms(blueprint)
+    initRoomCount()
     global playerNames
     playerNames = [p.user.username for p in Player.objects.all()]
     global current_player 
     current_player = Player.objects.all()[0].user.username
     global player_count
     player_count = len(playerNames)
+
+    player_dict = {
+        "current_player": current_player,
+        "players": [{
+            "player_id": p.id,
+            "username": p.user.username,
+            "score": p.points,
+            "current_room": p.currentRoom,
+        } for p in Player.objects.all()]
+    }
+
+    board = [{
+                "room_id": r.id,
+                "x_coord": r.x_coord,
+                "y_coord": r.y_coord,
+                "players": [p.id for p in Player.objects.filter(currentRoom=r.id)],
+                "point_value": r.points
+            } for r in Room.objects.all()]
+
+    pusher.trigger('player-channel', 'start-game', player_dict)
+    pusher.trigger('board-channel', 'start-game', board)
     return JsonResponse({'message': 'World creaated', 'blueprint':blueprint}, safe=True)
 
 @api_view(["GET"])
@@ -106,6 +132,7 @@ def joinGame(request):
     newPlayer.user = user
     newPlayer.save()
     # add logic: player drops in room
+    pusher.trigger('player-channel', 'player-joined', {'message': f"{request.user.username} has joined the game", 'player': user.username})
     return JsonResponse({'Msg':"Join Successful"}, safe=True)
 
 @api_view(["GET"])
@@ -117,6 +144,7 @@ def leaveGame(request):
         oldPlayer.delete()
     except Player.DoesNotExist:
         return JsonResponse({'error_msg':"Player has already left."}, safe=True)
+    pusher.trigger('player-channel', 'player-left', {'message': f"{request.user.username} has left the game", 'player': user.username})
     return JsonResponse({'Msg':"Leave Successful"}, safe=True)
 
 import random
@@ -144,6 +172,7 @@ def move(request):
     print(current_player)
     global player_count
     global playerNames
+    global roomCount
     if player.moves > 0 and player.user.username == current_player:
         player_id = player.id
         player_uuid = player.uuid
@@ -163,16 +192,21 @@ def move(request):
             nextRoom = Room.objects.get(id=nextRoomID)
             player.currentRoom=nextRoomID
             player.moves -= 1
+            pusher.trigger('player-channel', 'player-moves-update', player.moves)
             if player.moves == 0:
+                if room.points != 0:
+                    
+                    roomCount -= 1
                 room = player.room()
                 player.points += room.points
+                pusher.trigger('player-channel', 'player-points-update', player.points)
                 room.points = 0
                 room.save()
                 # if current_player = player_count:
                 #     current_player = players[0]
                 # else:
                 player_index = playerNames.index(current_player)
-                player_index +=1
+                player_index += 1
                 if player_index >= player_count:
                     current_player = playerNames[0]
                 else:
@@ -181,13 +215,41 @@ def move(request):
             playersNames = nextRoom.playerNames(player_id)
             currentPlayerUUIDs = room.playerUUIDs(player_id)
             nextPlayerUUIDs = nextRoom.playerUUIDs(player_id)
-            updated = {
+            # updated = {
+            #     "current_player": current_player,
+            #     "player": {
+            #         "player_id": player.id,
+            #         "username": player.user.username,
+            #         "points": player.points,
+            #         "current_room": player.currentRoom,
+            #         "isTurn": player.user.username == current_player,
+            #         "movePoints": player.moves
+            #     },
+            #     "oldRoom": {
+            #         "room_id": room.id,
+            #         "players": [p.id for p in Player.objects.filter(currentRoom=room.id)],
+            #         "points": room.points
+            #     },
+            #     "newRoom": {
+            #         "room_id": nextRoom.id,
+            #         "players": [p.id for p in Player.objects.filter(currentRoom=nextRoom.id)],
+            #         "points": nextRoom.points
+            #     }
+            # }
+
+            player_updates = {
+                "current_player": current_player,
                 "player": {
                     "player_id": player.id,
                     "username": player.user.username,
                     "points": player.points,
-                    "current_room": player.currentRoom
-                },
+                    "current_room": player.currentRoom,
+                    "isTurn": player.user.username == current_player,
+                    "movePoints": player.moves
+                }
+            }
+
+            board_updates = {
                 "oldRoom": {
                     "room_id": room.id,
                     "players": [p.id for p in Player.objects.filter(currentRoom=room.id)],
@@ -199,9 +261,30 @@ def move(request):
                     "points": nextRoom.points
                 }
             }
-    
-            pusher.trigger('game-channel', 'update-world', {'updates': updated})
-    
+
+            # END GAME
+            if roomCount <= 0:
+                # Find Winner
+                players = Player.objects.all()
+                winner = players[0]
+                for p in players[1:]:
+                    if p.points > winner.points:
+                        winner = p
+                # Alert players of winner
+                pusher.trigger('game-channel', 'end-game', {'winner': winner.user.username})
+                # Give normal updates
+                pusher.trigger('board-channel', 'update-world', board_updates)
+                pusher.trigger('player-channel', 'update-world', player_updates)
+                # Delete players
+                if len(players) > 0:
+                    players.delete()
+            # The game continues...
+            else:                
+                pusher.trigger('board-channel', 'update-world', board_updates)
+                pusher.trigger('player-channel', 'update-world', player_updates)
+
+
+
             # for p_uuid in currentPlayerUUIDs:
             #     pusher.trigger(f'p-channel-{p_uuid}', u'broadcast', {'message':f'{player.user.username} has walked {dirs[direction]}.'})
             # for p_uuid in nextPlayerUUIDs:
@@ -241,5 +324,5 @@ def say(request):
         'message': text
     }
 
-    pusher.trigger('game-channel', 'new-message', message)
+    pusher.trigger('player-channel', 'new-message', message)
     return JsonResponse({'message': "Message received"}, safe=True, status=201)
