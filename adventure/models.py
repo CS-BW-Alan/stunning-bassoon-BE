@@ -51,6 +51,7 @@ class Player(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, unique=True)
     moves = models.IntegerField(default=0)
     points = models.IntegerField(default=0)
+    color = models.CharField(max_length=50, default="gold")
     def initialize(self):
         if self.currentRoom == 0:
             self.currentRoom = Room.objects.first().id

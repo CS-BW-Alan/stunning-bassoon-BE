@@ -49,6 +49,7 @@ player_count = 0
 playerNames = []
 roomCount = None
 colors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange', 'black', 'white', 'gray', 'magenta', 'cyan', 'brown']
+available_colors = reversed(colors)
 
 def initRoomCount():
     global roomCount
@@ -151,7 +152,15 @@ def joinGame(request):
     newPlayer = Player()
     #user.player = newPlayer <- this line seems to do the same as below
     newPlayer.user = user
-    newPlayer.save()
+
+    global available_colors
+    if len(available_colors):
+        newPlayer.color = available_colors.pop()
+        newPlayer.save()
+    else:
+        return JsonResponse({'Msg':"Cannot join game. Maximum number of players."}, safe=True, status=500)
+
+
     # add logic: player drops in room
 
     # Pusher
@@ -166,7 +175,8 @@ def joinGame(request):
         "points": p.points,
         "current_room": p.currentRoom,
         "isTurn": p.user.username == current_player,
-        "movePoints": p.moves
+        "movePoints": p.moves,
+        "color": p.color
     } for p in Player.objects.all()]
     # Trigger player-joined event and pass in updated players list
     pusher.trigger('player-channel', 'player-joined', {'message': f"{request.user.username} has joined the game", 'player': user.username, 'players': players})
@@ -176,12 +186,16 @@ def joinGame(request):
 @api_view(["GET"])
 def leaveGame(request):
     user = request.user
+    global available_colors
     try:
         oldPlayer = user.player
+        available_colors.push(oldPlayer.color)
         user.player = None
         oldPlayer.delete()
     except Player.DoesNotExist:
         return JsonResponse({'error_msg':"Player has already left."}, safe=True)
+
+    
 
     # Pusher
     # Updated player list to pass through pusher
@@ -195,7 +209,8 @@ def leaveGame(request):
         "points": p.points,
         "current_room": p.currentRoom,
         "isTurn": p.user.username == current_player,
-        "movePoints": p.moves
+        "movePoints": p.moves,
+        "color": p.color
     } for p in Player.objects.all()]
     # Trigger player-left event and pass in updated players list
     pusher.trigger('player-channel', 'player-left', {'message': f"{request.user.username} has left the game", 'player': user.username, 'players': players})
@@ -299,7 +314,8 @@ def move(request):
                     "points": player.points,
                     "current_room": player.currentRoom,
                     "isTurn": player.user.username == current_player,
-                    "movePoints": player.moves
+                    "movePoints": player.moves,
+                    "color": player.color
                 }
             }
 
