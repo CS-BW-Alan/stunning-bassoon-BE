@@ -192,12 +192,14 @@ def move(request):
             nextRoom = Room.objects.get(id=nextRoomID)
             player.currentRoom=nextRoomID
             player.moves -= 1
+            pusher.trigger('player-channel', 'player-moves-update', player.moves)
             if player.moves == 0:
                 if room.points != 0:
                     
                     roomCount -= 1
                 room = player.room()
                 player.points += room.points
+                pusher.trigger('player-channel', 'player-points-update', player.point)
                 room.points = 0
                 room.save()
                 # if current_player = player_count:
@@ -213,7 +215,29 @@ def move(request):
             playersNames = nextRoom.playerNames(player_id)
             currentPlayerUUIDs = room.playerUUIDs(player_id)
             nextPlayerUUIDs = nextRoom.playerUUIDs(player_id)
-            updated = {
+            # updated = {
+            #     "current_player": current_player,
+            #     "player": {
+            #         "player_id": player.id,
+            #         "username": player.user.username,
+            #         "points": player.points,
+            #         "current_room": player.currentRoom,
+            #         "isTurn": player.user.username == current_player,
+            #         "movePoints": player.moves
+            #     },
+            #     "oldRoom": {
+            #         "room_id": room.id,
+            #         "players": [p.id for p in Player.objects.filter(currentRoom=room.id)],
+            #         "points": room.points
+            #     },
+            #     "newRoom": {
+            #         "room_id": nextRoom.id,
+            #         "players": [p.id for p in Player.objects.filter(currentRoom=nextRoom.id)],
+            #         "points": nextRoom.points
+            #     }
+            # }
+
+            player_updates = {
                 "current_player": current_player,
                 "player": {
                     "player_id": player.id,
@@ -222,7 +246,10 @@ def move(request):
                     "current_room": player.currentRoom,
                     "isTurn": player.user.username == current_player,
                     "movePoints": player.moves
-                },
+                }
+            }
+
+            board_updates = {
                 "oldRoom": {
                     "room_id": room.id,
                     "players": [p.id for p in Player.objects.filter(currentRoom=room.id)],
@@ -234,6 +261,7 @@ def move(request):
                     "points": nextRoom.points
                 }
             }
+
             if roomCount <= 0:
                 players = Player.objects.all()
                 winner = players[0]
@@ -242,7 +270,8 @@ def move(request):
                         winner = p
                 pusher.trigger('game-channel', 'end-game', {'winner': winner.user.username})
 
-            pusher.trigger('game-channel', 'update-world', {'updates': updated})
+            pusher.trigger('board-channel', 'update-world', board_updates)
+            pusher.trigger('player-channel', 'update-world', player_updates)
 
 
 
