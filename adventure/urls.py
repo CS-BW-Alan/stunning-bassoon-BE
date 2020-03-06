@@ -12,5 +12,5 @@ urlpatterns = [
     url('leave', api.leaveGame),
     url('roll', api.roll),
     url('getplayers', api.getPlayers),
-    url('deleteplayers', api.deletePlayers),
+    url('endgame', api.endGame),
 ]

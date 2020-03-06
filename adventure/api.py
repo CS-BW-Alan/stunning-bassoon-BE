@@ -118,15 +118,14 @@ def getPlayers(request):
     return JsonResponse({'message': 'Here are the players', 'players':[p.user.username for p in Player.objects.all()]}, safe=True)
 
 @api_view(["GET"])
-def deletePlayers(request):
-    if len(Player.objects.all()) > 0:
-        players = Player.objects.all().delete()
-        # for p in players:
-        #     p.delete()
-        #     p.save()
-        return JsonResponse({'message': "You've killed them all"}, safe=True)
-    else: 
-        return JsonResponse({'message': "Already no players"}, safe=True)
+def endGame(request):
+    players = Player.objects.all()
+    rooms = Room.objects.all()
+    if len(players) > 0:
+        players.delete()
+    if len(rooms) > 0:
+        rooms.delete()
+    return JsonResponse({'message': "All Rooms & Players Are Removed"}, safe=True)
 
 # deprecated 
 # @api_view(["GET"])
