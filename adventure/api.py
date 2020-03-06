@@ -132,7 +132,16 @@ def joinGame(request):
     newPlayer.user = user
     newPlayer.save()
     # add logic: player drops in room
-    pusher.trigger('player-channel', 'player-joined', {'message': f"{request.user.username} has joined the game", 'player': user.username})
+
+
+    players = [{
+        "player_id": p.id,
+        "username": p.user.username,
+        "score": p.points,
+        "current_room": p.currentRoom,
+    } for p in Player.objects.all()]
+
+    pusher.trigger('player-channel', 'player-joined', {'message': f"{request.user.username} has joined the game", 'player': user.username, 'players': players})
     return JsonResponse({'Msg':"Join Successful"}, safe=True)
 
 @api_view(["GET"])
@@ -144,7 +153,17 @@ def leaveGame(request):
         oldPlayer.delete()
     except Player.DoesNotExist:
         return JsonResponse({'error_msg':"Player has already left."}, safe=True)
-    pusher.trigger('player-channel', 'player-left', {'message': f"{request.user.username} has left the game", 'player': user.username})
+
+
+    players = [{
+        "player_id": p.id,
+        "username": p.user.username,
+        "score": p.points,
+        "current_room": p.currentRoom,
+    } for p in Player.objects.all()]
+
+
+    pusher.trigger('player-channel', 'player-left', {'message': f"{request.user.username} has left the game", 'player': user.username, 'players': players})
     return JsonResponse({'Msg':"Leave Successful"}, safe=True)
 
 import random
