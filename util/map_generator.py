@@ -251,7 +251,7 @@ class World:
         print("World creation complete")
         players=Player.objects.all()
         rooms = Room.objects.all()
-        interval = len(rooms)/len(players)
+        interval = len(rooms)//len(players)
         counter = 0
         for p in players:
             p.currentRoom= rooms[counter].id
