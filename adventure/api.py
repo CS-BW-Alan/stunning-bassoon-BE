@@ -189,7 +189,7 @@ def leaveGame(request):
     global available_colors
     try:
         oldPlayer = user.player
-        available_colors.push(oldPlayer.color)
+        available_colors.append(oldPlayer.color)
         user.player = None
         oldPlayer.delete()
     except Player.DoesNotExist:
