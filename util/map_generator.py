@@ -250,8 +250,12 @@ class World:
                         pass
         print("World creation complete")
         players=Player.objects.all()
+        rooms = Room.objects.all()
+        interval = len(rooms)/len(players)
+        counter = 0
         for p in players:
-            p.currentRoom=world_map[2][2].id
+            p.currentRoom= rooms[counter].id
+            counter += interval
             p.save()
-        print("Players set to start")
+        print("Players rooms set")
         return

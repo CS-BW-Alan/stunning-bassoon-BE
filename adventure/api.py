@@ -86,7 +86,7 @@ def startGame(request):
 
     pusher.trigger('player-channel', 'start-game', player_dict)
     pusher.trigger('board-channel', 'start-game', board)
-    return JsonResponse({'message': 'World creaated', 'blueprint':blueprint}, safe=True)
+    return JsonResponse({'message': 'World created', 'blueprint':blueprint}, safe=True)
 
 @api_view(["GET"])
 def getGame(request):
@@ -167,9 +167,9 @@ def move(request):
     dirs={"w": "north", "s": "south", "d": "east", "a": "west"}
     reverse_dirs = {"n": "south", "s": "north", "e": "west", "w": "east"}
     player = request.user.player
-    print(player.user.username)
+    #print(player.user.username)
     global current_player
-    print(current_player)
+    #print(current_player)
     global player_count
     global playerNames
     global roomCount
@@ -193,18 +193,17 @@ def move(request):
             player.currentRoom=nextRoomID
             player.moves -= 1
             pusher.trigger('player-channel', 'player-moves-update', player.moves)
+
+            if room.points != 0:
+                roomCount -= 1
+            # Player will take points from each room moved to.
+            room = player.room()
+            player.points += room.points
+            pusher.trigger('player-channel', 'player-points-update', player.points)
+            room.points = 0
+            room.save()
+            # Logic to switch player turns
             if player.moves == 0:
-                if room.points != 0:
-                    
-                    roomCount -= 1
-                room = player.room()
-                player.points += room.points
-                pusher.trigger('player-channel', 'player-points-update', player.points)
-                room.points = 0
-                room.save()
-                # if current_player = player_count:
-                #     current_player = players[0]
-                # else:
                 player_index = playerNames.index(current_player)
                 player_index += 1
                 if player_index >= player_count:
@@ -271,7 +270,7 @@ def move(request):
                     if p.points > winner.points:
                         winner = p
                 # Alert players of winner
-                pusher.trigger('game-channel', 'end-game', {'winner': winner.user.username})
+                pusher.trigger('board-channel', 'end-game', {'winner': winner.user.username})
                 # Give normal updates
                 pusher.trigger('board-channel', 'update-world', board_updates)
                 pusher.trigger('player-channel', 'update-world', player_updates)
@@ -289,12 +288,12 @@ def move(request):
             #     pusher.trigger(f'p-channel-{p_uuid}', u'broadcast', {'message':f'{player.user.username} has walked {dirs[direction]}.'})
             # for p_uuid in nextPlayerUUIDs:
             #     pusher.trigger(f'p-channel-{p_uuid}', u'broadcast', {'message':f'{player.user.username} has entered from the {reverse_dirs[direction]}.'})
-            return JsonResponse({'name':player.user.username, 'player_points':player.points, 'title':nextRoom.title, 'description':nextRoom.description, 'players':playersNames, 'error_msg':"", 'room_points':room.points}, safe=True)
+            return JsonResponse({'name':player.user.username, 'player_points':player.points, 'x_coord':nextRoom.x_coord, 'y_coord':nextRoom.y_coord, 'players':playersNames, 'error_msg':"", 'room_points':room.points}, safe=True)
         else:
             playersNames = room.playerNames(player_id)
             return JsonResponse({'error_msg':"You cannot move that way."}, safe=True)
     else:
-        return JsonResponse({'error_msg':"Player has no moves left."}, safe=True)
+        return JsonResponse({'error_msg':"Player has no moves left. It may not be your turn or you have not rolled yet."}, safe=True)
 
 @api_view(["GET"])
 def details(request):
