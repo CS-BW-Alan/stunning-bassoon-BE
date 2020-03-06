@@ -156,7 +156,7 @@ def joinGame(request):
     # Trigger player-joined event and pass in updated players list
     pusher.trigger('player-channel', 'player-joined', {'message': f"{request.user.username} has joined the game", 'player': user.username, 'players': players})
     
-    return JsonResponse({'Msg':"Join Successful"}, safe=True)
+    return JsonResponse({'Msg':"Join Successful", 'player_id': newPlayer.id, 'Name': user.username}, safe=True)
 
 @api_view(["GET"])
 def leaveGame(request):
