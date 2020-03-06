@@ -332,6 +332,7 @@ def move(request):
                 # Delete players
                 if len(players) > 0:
                     players.delete()
+                Room.objects.all().delete()
             # The game continues...
             else:                
                 pusher.trigger('board-channel', 'update-world', board_updates)
