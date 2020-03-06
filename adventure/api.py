@@ -96,22 +96,36 @@ def startGame(request):
 
 @api_view(["GET"])
 def getGame(request):
-    return JsonResponse({'message': 'Welcome to the game', 'blueprint':blueprint}, safe=True)
+    board = [{
+                "room_id": r.id,
+                "x_coord": r.x_coord,
+                "y_coord": r.y_coord,
+                "players": [p.id for p in Player.objects.filter(currentRoom=r.id)],
+                "point_value": r.points
+            } for r in Room.objects.all()]
+    players = [{
+        "player_id": p.id,
+        "username": p.user.username,
+        "points": p.points,
+        "current_room": p.currentRoom,
+        "isTurn": p.user.username == current_player,
+        "movePoints": p.moves
+    } for p in Player.objects.all()]
+    return JsonResponse({'message': 'Welcome to the game', 'blueprint':blueprint, 'board':board, 'players':players}, safe=True)
 
 @api_view(["GET"])
 def getPlayers(request):
     return JsonResponse({'message': 'Here are the players', 'players':[p.user.username for p in Player.objects.all()]}, safe=True)
 
 @api_view(["GET"])
-def deletePlayers(request):
-    if len(Player.objects.all()) > 0:
-        players = Player.objects.all().delete()
-        # for p in players:
-        #     p.delete()
-        #     p.save()
-        return JsonResponse({'message': "You've killed them all"}, safe=True)
-    else: 
-        return JsonResponse({'message': "Already no players"}, safe=True)
+def endGame(request):
+    players = Player.objects.all()
+    rooms = Room.objects.all()
+    if len(players) > 0:
+        players.delete()
+    if len(rooms) > 0:
+        rooms.delete()
+    return JsonResponse({'message': "All Rooms & Players Are Removed"}, safe=True)
 
 # deprecated 
 # @api_view(["GET"])
@@ -317,6 +331,7 @@ def move(request):
                 # Delete players
                 if len(players) > 0:
                     players.delete()
+                Room.objects.all().delete()
             # The game continues...
             else:                
                 pusher.trigger('board-channel', 'update-world', board_updates)
