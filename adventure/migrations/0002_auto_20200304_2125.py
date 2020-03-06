@@ -10,11 +10,11 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='room',
-            name='room_id',
-            field=models.IntegerField(default=0),
-        ),
+        # migrations.AddField(
+        #     model_name='room',
+        #     name='room_id',
+        #     field=models.IntegerField(default=0),
+        # ),
         migrations.AddField(
             model_name='room',
             name='x_coord',
