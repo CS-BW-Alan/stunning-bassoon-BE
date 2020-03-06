@@ -12,7 +12,7 @@ def randomint():
 class Room(models.Model):
     title = models.CharField(max_length=50, default="An open space")
     description = models.CharField(max_length=500, default="You can travel freely through this space")
-    room_id = models.IntegerField(default=0)
+    # room_id = models.IntegerField(default=0)
     x_coord = models.IntegerField(default=0)
     y_coord = models.IntegerField(default=0)
     n_to = models.IntegerField(default=0)

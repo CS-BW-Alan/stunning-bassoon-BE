@@ -270,7 +270,7 @@ def move(request):
                     if p.points > winner.points:
                         winner = p
                 # Alert players of winner
-                pusher.trigger('game-channel', 'end-game', {'winner': winner.user.username})
+                pusher.trigger('board-channel', 'end-game', {'winner': winner.user.username})
                 # Give normal updates
                 pusher.trigger('board-channel', 'update-world', board_updates)
                 pusher.trigger('player-channel', 'update-world', player_updates)
@@ -323,5 +323,5 @@ def say(request):
         'message': text
     }
 
-    pusher.trigger('player-channel', 'new-message', message)
+    pusher.trigger('chat-channel', 'new-message', message)
     return JsonResponse({'message': "Message received"}, safe=True, status=201)
