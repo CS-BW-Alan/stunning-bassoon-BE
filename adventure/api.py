@@ -155,7 +155,7 @@ def leaveGame(request):
         return JsonResponse({'error_msg':"Player has already left."}, safe=True)
 
 
-    players =  [{
+    players = [{
         "player_id": p.id,
         "username": p.user.username,
         "score": p.points,
