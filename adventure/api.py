@@ -49,7 +49,7 @@ player_count = 0
 playerNames = []
 roomCount = None
 colors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange', 'black', 'white', 'gray', 'magenta', 'cyan', 'brown']
-available_colors = reversed(colors)
+available_colors = list(reversed(colors))
 
 def initRoomCount():
     global roomCount
