@@ -199,7 +199,7 @@ def move(request):
                     roomCount -= 1
                 room = player.room()
                 player.points += room.points
-                pusher.trigger('player-channel', 'player-points-update', player.point)
+                pusher.trigger('player-channel', 'player-points-update', player.points)
                 room.points = 0
                 room.save()
                 # if current_player = player_count:
@@ -262,16 +262,26 @@ def move(request):
                 }
             }
 
+            # END GAME
             if roomCount <= 0:
+                # Find Winner
                 players = Player.objects.all()
                 winner = players[0]
                 for p in players[1:]:
                     if p.points > winner.points:
                         winner = p
+                # Alert players of winner
                 pusher.trigger('game-channel', 'end-game', {'winner': winner.user.username})
-
-            pusher.trigger('board-channel', 'update-world', board_updates)
-            pusher.trigger('player-channel', 'update-world', player_updates)
+                # Give normal updates
+                pusher.trigger('board-channel', 'update-world', board_updates)
+                pusher.trigger('player-channel', 'update-world', player_updates)
+                # Delete players
+                if len(players) > 0:
+                    players.delete()
+            # The game continues...
+            else:                
+                pusher.trigger('board-channel', 'update-world', board_updates)
+                pusher.trigger('player-channel', 'update-world', player_updates)
 
 
 
