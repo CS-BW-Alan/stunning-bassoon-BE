@@ -324,5 +324,5 @@ def say(request):
         'message': text
     }
 
-    pusher.trigger('player-channel', 'new-message', message)
+    pusher.trigger('chat-channel', 'new-message', message)
     return JsonResponse({'message': "Message received"}, safe=True, status=201)
