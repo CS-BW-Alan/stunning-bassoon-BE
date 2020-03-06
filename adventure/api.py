@@ -69,10 +69,16 @@ def startGame(request):
     player_dict = {
         "current_player": current_player,
         "players": [{
+            # "player_id": p.id,
+            # "username": p.user.username,
+            # "score": p.points,
+            # "current_room": p.currentRoom,
             "player_id": p.id,
             "username": p.user.username,
-            "score": p.points,
+            "points": p.points,
             "current_room": p.currentRoom,
+            "isTurn": p.user.username == current_player,
+            "movePoints": p.moves
         } for p in Player.objects.all()]
     }
 
@@ -133,15 +139,23 @@ def joinGame(request):
     newPlayer.save()
     # add logic: player drops in room
 
-
+    # Pusher
+    # Updated player list to pass through pusher
     players = [{
+        # "player_id": p.id,
+        # "username": p.user.username,
+        # "score": p.points,
+        # "current_room": p.currentRoom,
         "player_id": p.id,
         "username": p.user.username,
-        "score": p.points,
+        "points": p.points,
         "current_room": p.currentRoom,
+        "isTurn": p.user.username == current_player,
+        "movePoints": p.moves
     } for p in Player.objects.all()]
-
+    # Trigger player-joined event and pass in updated players list
     pusher.trigger('player-channel', 'player-joined', {'message': f"{request.user.username} has joined the game", 'player': user.username, 'players': players})
+    
     return JsonResponse({'Msg':"Join Successful"}, safe=True)
 
 @api_view(["GET"])
@@ -154,16 +168,23 @@ def leaveGame(request):
     except Player.DoesNotExist:
         return JsonResponse({'error_msg':"Player has already left."}, safe=True)
 
-
+    # Pusher
+    # Updated player list to pass through pusher
     players = [{
+        # "player_id": p.id,
+        # "username": p.user.username,
+        # "score": p.points,
+        # "current_room": p.currentRoom,
         "player_id": p.id,
         "username": p.user.username,
-        "score": p.points,
+        "points": p.points,
         "current_room": p.currentRoom,
+        "isTurn": p.user.username == current_player,
+        "movePoints": p.moves
     } for p in Player.objects.all()]
-
-
+    # Trigger player-left event and pass in updated players list
     pusher.trigger('player-channel', 'player-left', {'message': f"{request.user.username} has left the game", 'player': user.username, 'players': players})
+
     return JsonResponse({'Msg':"Leave Successful"}, safe=True)
 
 import random
