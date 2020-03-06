@@ -48,6 +48,7 @@ current_player = None
 player_count = 0
 playerNames = []
 roomCount = None
+colors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange', 'black', 'white', 'gray', 'magenta', 'cyan', 'brown']
 
 def initRoomCount():
     global roomCount
