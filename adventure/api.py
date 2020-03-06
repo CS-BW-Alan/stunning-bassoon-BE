@@ -88,7 +88,7 @@ def startGame(request):
                 "room_id": r.id,
                 "x_coord": r.x_coord,
                 "y_coord": r.y_coord,
-                "players": [p.id for p in Player.objects.filter(currentRoom=r.id)],
+                "players": [{'id': p.id, 'color': p.color} for p in Player.objects.filter(currentRoom=r.id)],
                 "point_value": r.points
             } for r in Room.objects.all()]
 
@@ -102,7 +102,7 @@ def getGame(request):
                 "room_id": r.id,
                 "x_coord": r.x_coord,
                 "y_coord": r.y_coord,
-                "players": [p.id for p in Player.objects.filter(currentRoom=r.id)],
+                "players": [{'id': p.id, 'color': p.color} for p in Player.objects.filter(currentRoom=r.id)],
                 "point_value": r.points
             } for r in Room.objects.all()]
     players = [{
@@ -322,12 +322,12 @@ def move(request):
             board_updates = {
                 "oldRoom": {
                     "room_id": room.id,
-                    "players": [p.id for p in Player.objects.filter(currentRoom=room.id)],
+                    "players": [{'id': p.id, 'color': p.color} for p in Player.objects.filter(currentRoom=room.id)],
                     "points": room.points
                 },
                 "newRoom": {
                     "room_id": nextRoom.id,
-                    "players": [p.id for p in Player.objects.filter(currentRoom=nextRoom.id)],
+                    "players": [{'id': p.id, 'color': p.color} for p in Player.objects.filter(currentRoom=nextRoom.id)],
                     "points": nextRoom.points
                 }
             }
