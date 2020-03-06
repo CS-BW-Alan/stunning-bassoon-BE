@@ -96,7 +96,22 @@ def startGame(request):
 
 @api_view(["GET"])
 def getGame(request):
-    return JsonResponse({'message': 'Welcome to the game', 'blueprint':blueprint}, safe=True)
+    board = [{
+                "room_id": r.id,
+                "x_coord": r.x_coord,
+                "y_coord": r.y_coord,
+                "players": [p.id for p in Player.objects.filter(currentRoom=r.id)],
+                "point_value": r.points
+            } for r in Room.objects.all()]
+    players = [{
+        "player_id": p.id,
+        "username": p.user.username,
+        "points": p.points,
+        "current_room": p.currentRoom,
+        "isTurn": p.user.username == current_player,
+        "movePoints": p.moves
+    } for p in Player.objects.all()]
+    return JsonResponse({'message': 'Welcome to the game', 'blueprint':blueprint, 'board':board, 'players':players}, safe=True)
 
 @api_view(["GET"])
 def getPlayers(request):
