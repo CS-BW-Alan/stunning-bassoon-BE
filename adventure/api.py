@@ -318,19 +318,25 @@ def move(request):
                     "color": player.color
                 }
             }
-
-            board_updates = {
-                "oldRoom": {
-                    "room_id": room.id,
-                    "players": [{'id': p.id, 'color': p.color} for p in Player.objects.filter(currentRoom=room.id)],
-                    "points": room.points
-                },
-                "newRoom": {
-                    "room_id": nextRoom.id,
-                    "players": [{'id': p.id, 'color': p.color} for p in Player.objects.filter(currentRoom=nextRoom.id)],
-                    "points": nextRoom.points
-                }
-            }
+            # board_updates = {
+            #     "oldRoom": {
+            #         "room_id": room.id,
+            #         "players": [{'id': p.id, 'color': p.color} for p in Player.objects.filter(currentRoom=room.id)],
+            #         "points": room.points
+            #     },
+            #     "newRoom": {
+            #         "room_id": nextRoom.id,
+            #         "players": [{'id': p.id, 'color': p.color} for p in Player.objects.filter(currentRoom=nextRoom.id)],
+            #         "points": nextRoom.points
+            #     }
+            # }
+            board = [{
+                "room_id": r.id,
+                "x_coord": r.x_coord,
+                "y_coord": r.y_coord,
+                "players": [{'id': p.id, 'color': p.color} for p in Player.objects.filter(currentRoom=r.id)],
+                "point_value": r.points
+            } for r in Room.objects.all()]
 
             # END GAME
             if roomCount <= 0:
@@ -343,7 +349,7 @@ def move(request):
                 # Alert players of winner
                 pusher.trigger('board-channel', 'end-game', {'winner': winner.user.username})
                 # Give normal updates
-                pusher.trigger('board-channel', 'update-world', board_updates)
+                pusher.trigger('board-channel', 'update-world', board)
                 pusher.trigger('player-channel', 'update-world', player_updates)
                 # Delete players
                 if len(players) > 0:
@@ -351,7 +357,7 @@ def move(request):
                 Room.objects.all().delete()
             # The game continues...
             else:                
-                pusher.trigger('board-channel', 'update-world', board_updates)
+                pusher.trigger('board-channel', 'update-world', board)
                 pusher.trigger('player-channel', 'update-world', player_updates)
 
 
