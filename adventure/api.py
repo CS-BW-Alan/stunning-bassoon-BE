@@ -43,7 +43,6 @@ blueprint = [
     [0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1]
 ]
 
-world_map = []
 current_player = None
 player_count = 0
 playerNames = []
@@ -58,43 +57,46 @@ def initRoomCount():
 # @csrf_exempt
 @api_view(["GET"])
 def startGame(request):
-    global world_map 
-    world_map = World.create_rooms(blueprint)
-    initRoomCount()
-    global playerNames
-    playerNames = [p.user.username for p in Player.objects.all()]
-    global current_player 
-    current_player = Player.objects.all()[0].user.username
-    global player_count
-    player_count = len(playerNames)
+    global current_player
+    playerCount = len(Player.objects.all())
+    if current_player == None and playerCount > 0:
+        World.create_rooms(blueprint)
+        initRoomCount()
+        global playerNames
+        playerNames = [p.user.username for p in Player.objects.all()]
+        current_player = Player.objects.all()[0].user.username
+        global player_count
+        player_count = len(playerNames)
 
-    player_dict = {
-        "current_player": current_player,
-        "players": [{
-            # "player_id": p.id,
-            # "username": p.user.username,
-            # "score": p.points,
-            # "current_room": p.currentRoom,
-            "player_id": p.id,
-            "username": p.user.username,
-            "points": p.points,
-            "current_room": p.currentRoom,
-            "isTurn": p.user.username == current_player,
-            "movePoints": p.moves
-        } for p in Player.objects.all()]
-    }
+        player_dict = {
+            "current_player": current_player,
+            "players": [{
+                # "player_id": p.id,
+                # "username": p.user.username,
+                # "score": p.points,
+                # "current_room": p.currentRoom,
+                "player_id": p.id,
+                "username": p.user.username,
+                "points": p.points,
+                "current_room": p.currentRoom,
+                "isTurn": p.user.username == current_player,
+                "movePoints": p.moves
+            } for p in Player.objects.all()]
+        }
 
-    board = [{
-                "room_id": r.id,
-                "x_coord": r.x_coord,
-                "y_coord": r.y_coord,
-                "players": [{'id': p.id, 'color': p.color} for p in Player.objects.filter(currentRoom=r.id)],
-                "point_value": r.points
-            } for r in Room.objects.all()]
+        board = [{
+                    "room_id": r.id,
+                    "x_coord": r.x_coord,
+                    "y_coord": r.y_coord,
+                    "players": [{'id': p.id, 'color': p.color} for p in Player.objects.filter(currentRoom=r.id)],
+                    "point_value": r.points
+                } for r in Room.objects.all()]
 
-    pusher.trigger('player-channel', 'start-game', player_dict)
-    pusher.trigger('board-channel', 'start-game', board)
-    return JsonResponse({'message': 'World created', 'blueprint':blueprint}, safe=True)
+        pusher.trigger('player-channel', 'start-game', player_dict)
+        pusher.trigger('board-channel', 'start-game', board)
+        return JsonResponse({'message': 'World created', 'blueprint':blueprint}, safe=True)
+    else:
+        return JsonResponse({'message': 'Game was started by another player or no players have joined for a game to be started.'}, safe=True)
 
 @api_view(["GET"])
 def getGame(request):
@@ -121,6 +123,8 @@ def getPlayers(request):
 
 @api_view(["GET"])
 def endGame(request):
+    global current_player
+    current_player = None
     players = Player.objects.all()
     rooms = Room.objects.all()
     if len(players) > 0:
@@ -349,6 +353,7 @@ def move(request):
                 if len(players) > 0:
                     players.delete()
                 Room.objects.all().delete()
+                current_player = None
             # The game continues...
             else:                
                 pusher.trigger('board-channel', 'update-world', board_updates)

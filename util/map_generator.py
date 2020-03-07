@@ -258,4 +258,3 @@ class World:
             counter += interval
             p.save()
         print("Players rooms set")
-        return
