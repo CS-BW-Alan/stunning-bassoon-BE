@@ -124,9 +124,12 @@ def getPlayers(request):
 @api_view(["GET"])
 def endGame(request):
     global current_player
+    global available_colors
     current_player = None
     players = Player.objects.all()
     rooms = Room.objects.all()
+    for p in players:
+        available_colors.append(p.color)
     if len(players) > 0:
         players.delete()
     if len(rooms) > 0:
@@ -357,6 +360,8 @@ def move(request):
                 pusher.trigger('player-channel', 'update-world', player_updates)
                 # Delete players
                 if len(players) > 0:
+                    for p in players:
+                        available_colors.append(players.color)
                     players.delete()
                 Room.objects.all().delete()
                 current_player = None
